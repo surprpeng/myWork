@@ -1,0 +1,351 @@
+MySQL基本知识：
+	- 是一种C-S的DBMS；
+	- 需要连接到服务器，主机名、端口号、用户名等信息。
+	- 
+
+mysql语句：
+- use databasename; 选择数据库
+
+
+- select语句：
+	- select * from tablename; 读取表的所有列
+	- select column1_name , column2_name from table_name; 读取指定列的名字
+	- select distinct column_name from table_name; 读取指定列的信息，但是只显示不同的值。
+- where : 用于提取那些满足指定条件的记录。
+    - SELECT * FROM table_name WHERE country='CN'; // 若使用文本字段，则需要加单引号
+	- SELECT * FROM Websites WHERE id=1;	//  如果内容为数值字段，则不用加单引号，
+	- SELECT * FROM Websites WHERE id IS NULL;	//  检测空值
+	- 运算符： =, <>, >, <, >=, <=, between, like, in
+	- and & or 可以用来同时判断多个条件，例：SELECT * FROM Websites WHERE country='CN' AND alexa > 50; 
+		（注：有限处理and，所以有多个条件的时候，用（）区分。）
+
+- order by : 用于对结果表按照一个列或者多个列进行排序
+	- SELECT * FROM Websites
+			ORDER BY alexa DESC; 降序
+	- SELECT * FROM Websites
+			ORDER BY alexa ; 默认为升序，也可以加上ASC
+	- 多列排序
+		SELECT * FROM Websites    //先按照country列进行降序排序，在通过alexa进行升序排序；可以用desc修饰每一列
+		ORDER BY country desc,alexa;
+- insert into： 用于向表中插入新记录
+    - 第一种形式，无需指定数据的列名，INSERT INTO table_name VALUES (value1,value2,value3,...);
+	- 第二种形式，需要指定列名及被插入的值，INSERT INTO table_name (column1,column2,column3,...)
+											VALUES (value1,value2,value3,...);
+	- 省略列，该列必须要允许NULL值。
+	- INSERT LOW_PRIORITY INTO ：插入操作是非常耗时的，如果数据检索是最重要的，就可以降低插入操作的优先级。
+	- 插入检索出的数据
+		INSERT INTO table_name (column1,column2,column3,...)
+			SELECT column1,column2,column3,... FROM table2 //不关心列名是否相等，只关心列的位置。
+- update :更新表中已存在的记录
+	- UPDATE Websites 
+		SET alexa='5000', country='USA' 
+		WHERE name='菜鸟教程';			//查找所有name为菜鸟教程的行，并将其指定的值进行修改
+	- 更新多个列时发生错误，整个更新都会取消，要想继续执行，可用以下语句
+	- UPDATE IGNORE Websites 
+		SET alexa='5000', country='USA' 
+		WHERE name='菜鸟教程';			//查找所有name为菜鸟教程的行，并将其指定的值进行修改		
+- delete:
+	 -  DELETE FROM Websites
+     WHERE name='Facebook' AND country='USA'; 删除指定行
+	 - DELETE * FROM table_name; or DELETE FROM table_name; 删除所有行
+	 - 更快的删除 TRUNCATE TABLE (实际是删除原来的表，并重新创建一个表)
+- limit
+	- 在MySQL中用limit限制结果表的数量，
+	    - SELECT * FROM Websites LIMIT 2; 输出两条结果
+	- 在Microsoft SQL Server中用TOP限制结果表的数量
+		- SELECT TOP 50 PERCENT * FROM Websites;
+	- SELECT * FROM Websites
+			ORDER BY alexa DESC LIMIT 5,5;  输出从第5行开始的5行信息；第一行为行0；
+
+- like ： like 操作符用于在 WHERE 子句中搜索列中的指定模式
+	- SELECT * FROM Websites
+			WHERE name LIKE '%k'; 选取name中以k结尾的所有行
+    - SELECT * FROM Websites
+			WHERE name not LIKE '%k'; 选取name中以不以k结尾的所有行
+	- like不能匹配在列值中的文本，而REGEXP却可以。
+- 通配符
+	- % : 替代0个或多个字符。
+	- _ : 替代一个字符。0
+	- MySQL 中使用 REGEXP 或 NOT REGEXP 运算符 (或 RLIKE 和 NOT RLIKE) 来操作正则表达式。
+		- SELECT * FROM Websites
+			WHERE name REGEXP '^[GFs]'; //SQL 语句选取 name 以 "G"、"F" 或 "s" 开始的所有网站：
+	- 在mysql中转义字符用两个\\，一个mysql解释，一个正则表达式进行解释。
+- 全文搜索功能：
+	- 使用like和正则表达式要求尝试匹配所有的行（这些搜索极少使用表索引），随着行数增加，搜索非常耗时。
+	- 明确控制和智能化结果。
+	- step1：在建表的时候建立索引，FULLTEXT(column_name) 
+	- 使用Match()- 指定搜索的列 和Against()- 指定使用的搜索表达式 进行全文搜索。
+		 SELECT column_name FROM Websites
+		 WHERE Match(column_name) Against('rabbit');
+	- 对结果进行排序
+	- 查询扩展：查找相似的行
+		 SELECT column_name FROM Websites
+		 WHERE Match(column_name) Against('rabbit' WITH QUERY EPANSION);
+	- 布尔文本搜索
+		- 即使没有定义FULLTEXT索引也可以使用
+		 SELECT column_name FROM Websites
+		 WHERE Match(column_name) Against('rabbit' IN BOOLEAN MODE);
+- IN : 	IN 操作符允许您在 WHERE 子句中规定多个值。
+	- SELECT * FROM Websites
+		WHERE name IN ('Google','菜鸟教程'); //选取 name 为 "Google" 或 "菜鸟教程" 的所有网站
+- between : 操作符选取介于两个值之间的数据范围内的值。这些值可以是数值、文本或者日期
+	- SELECT * FROM Websites
+		WHERE alexa BETWEEN 1 AND 20;
+	- SELECT * FROM Websites
+	    WHERE alexa NOT BETWEEN 1 AND 20;
+		
+- join : 用于把来自两个或多个表的行结合起来
+	- mySQL是关系型数据库，将信息分为多个表进行存储，可伸缩性强、联结是关系型数据库最强大的存在。
+	- 自联结：用表别名实现,自联结比子查询效率高。
+		SELECT p1.name, p1.count
+		FROM Websites AS p1, Websites AS p2
+		WHERE p1.id = p2.id
+			AND p2.prod = 'DTNR';
+	- 内部联结：只显示能匹配的行，未匹配的行不显示
+		SELECT Websites.name, access_log.count, access_log.date
+		FROM Websites
+		INNER JOIN access_log
+		ON Websites.id=access_log.site_id    // 以id为连接进行匹配，若没有匹配，则返回空行
+		ORDER BY access_log.count;
+	- 外部联结：LEFT OUTER JION
+		SELECT Websites.name, access_log.count, access_log.date
+		FROM Websites
+		LEFT OUTER JOIN access_log
+		ON Websites.id=access_log.site_id    //返回左表中所有行，如果右边中没有匹配则对应的列为null。
+		ORDER BY access_log.count DESC;			RIGHT JOIN与LEFT JION相同
+		
+- union ： 将多条select语句的结果合并输出，选取不同的值。
+	- SELECT country FROM Websites
+		UNION
+		SELECT country FROM apps
+		ORDER BY country; // 自动清除重复的行。只能使用一条ORDER BY语句，必须放在最后。对所有结果进行排序。
+	- 要输出所有的结果用union all；
+	
+- CREATE :
+		CREATE TABLE table_name
+		(
+		column_name1 data_type(size) constraint_name,
+		column_name2 data_type(size) constraint_name,
+		column_name3 data_type(size) constraint_name,
+		....
+		PRIMARY KEY(column_name1)
+		)ENGING = InnoDB;
+	- NOT NULL : 某列不能存储NULL值
+	- UNIQUE : 某列的值必须唯一、
+	- primary key :  not null 和 unique 的结合,主键
+		- 可以定义由多个列形成的主键 PRIMARY KEY(column_name1，column_name2),表明组合唯一
+		- 一个表只能有一个主键
+	- AUTO_INCREMENT: 自动增加；
+	- foreign key :  一个表中的foreign key指向另一个表中的unique key
+	- check : CREATE TABLE Persons
+				(
+				P_Id int NOT NULL,
+				LastName varchar(255) NOT NULL,
+				FirstName varchar(255),
+				Address varchar(255),
+				City varchar(255),
+				CHECK (P_Id>0)
+				)
+	- default :DEFAULT 约束用于向列中插入默认值。
+			CREATE TABLE Persons
+			(
+				P_Id int NOT NULL,
+				LastName varchar(255) NOT NULL,
+				FirstName varchar(255),
+				Address varchar(255),
+				City varchar(255) DEFAULT 'Sandnes'
+			)	
+	- 引擎类型：
+		- InnoDB是一个可靠的事务处理引擎，不支持全文搜索
+		- MEMORY功能等同于MyISAM,但是数据存储在内存中，而不是在磁盘中，速度很快，特别适合临时表
+		- MyISAM是一个性能极高的引擎，支持全文搜索，但不支持事务处理。
+- drop ：通过使用 DROP 语句，可以轻松地删除索引、表和数据库
+	- DROP TABLE table_name
+	- DROP DATABASE database_name
+	- ALTER TABLE table_name DROP INDEX index_name //删除表中的索引
+
+- ALTER TABLE ： 语句用于在已有的表中添加、删除或修改列。（用于更新表定义）
+	- ALTER TABLE table_name 
+		ADD  column_name CHAR(20)  //添加新列
+	- ALTER TABLE table_name 
+		DROP COLUMN  column_name  删除列
+	- 定义外键
+	  ALTER TABLE table_name 
+		DROP COLUMN  column_name  删除列
+- RENAME TABLE a TO b; 重命名表
+- 视图
+	- 重用SQL语句，简化SQL操作
+	- 不包含数据，只是包含查询指令
+	- CREATE VIEW view_name AS SELECT指令
+- 存储过程：
+	- 简单、安全、性能高
+	- 存储过程实际上是一种函数。
+- 使用游标
+- 触发器
+- 事务处理
+	- 用来维护数据库的完整性。关系型数据库需要对多个表进行更新，若执行到一半出了故障，数据库数据就会错乱
+	- 事务处理是一种机制，用来管理必须成批执行的MySQL操作，以保证不完整的操作。
+	- START TRANSACTION :开启事务处理
+	- ROLLBACK: 回退INSERT,UPDATE,DELETE语句
+	- COMMIT: 提交
+	- SAVEPOINT name； 设置保存点，进行部分回退和提交。
+	- 事务符合ACID原则： 原子性，一致性，隔离性，持久性。
+		- 原子性 ：事务要么都成功，要么都失败
+			- 日志 undo log 记录需要回滚的日志信息，保证原子性
+		- 一致性 ： 事务发生前，数据满足约束， 事务处理后，数据也应该满足约束。正确的状态到正确的状态
+		- 隔离性 ：一个事务对其他事务不可见
+			- MVCC ：多版本并发控制
+				- READVIEW : 数组存储活动的事务id
+				- 每次用当前id与READVIEW中的id做比较
+				- 读已提交和可重复读中运用MVCC
+					- 读已提交中：每次查询都新建READVIEW
+					- 可重复读 ： 事务开启时，新建READVIEW，后续不会更改。
+		- 持久性 ： 一旦事务提交，数据永久保存
+			- redo log记录这次操作
+	- 隔离级别：
+		- 读未提交
+			- 事务A可以读取到事务B未提交的数据
+			- 存在问题 ：脏读现象。
+		- 读已提交
+			- 事务A只能读取到事务B提交后的数据
+			- 数据绝对真实
+			- 存在问题 ：不可重复读取（第一次读到数据是3条，但事务没有结束，可能第二次读的时候读到4条数据）
+		- 可重复读（mysql默认的隔离级别）
+			- 事务A开启后，不管多久，每一次读取的数据都是一致的，即使事务B已经修改数据。
+			- 存在问题 ：幻想读 ， 数据不真实， 永远读取的都是事务开启时的数据。
+		- 序列化
+			- 事务排队，不能并发，效率低
+
+- 计算字段
+	- 用来再读取表数据的时候进行数据的整合和计算，然后传给客户端
+	- concat(a, b): 将a、b列数据整合输出为1列，即ab；
+	- RTrim(a),去除右边的空格。LTrim(a);
+	- AS：修改列名。
+	- 执行算术运算:*、-、+、/
+		SELECT q*item AS new_column FROM table where ...;
+- 数据处理函数
+	- concat(a, b): 将a、b列数据整合输出为1列，即ab；
+	- RTrim(a),去除右边的空格。LTrim(a); 
+	- Upper():将所有字母变成大写。
+	- Left(): Length():Locate():Lower():Right():
+	- Soundex()；匹配发音类似的字符串。
+- 聚集函数
+	- AVG();COUNT();MAX();MIN();SUM(); 返回某列的信息；要求必须指定新的列名；
+- 分组数据
+	- GROUP BY:
+		- SELECT id, COUNT(*) AS num FROM table GROUP BY id; 将以id作为索引进行排序、分组，然后第二列是
+			每组的行数。
+	- HAVING 过滤分组，而WHERE过滤行，所有的WHERE都可以换成HAVING，
+		- SELECT id, COUNT(*) AS num FROM table GROUP BY id HAVING COUNT(*) >= 2;
+- SELECT子句顺序：
+	SELECT FROM WHERE GROUP BY HAVING OREDER BY LIMIT;
+- 利用子查询进行过滤，SELECT语句可以嵌套，从内向外查询；
+
+
+
+- 数据库与数据库实例
+	- 数据库是数据的集合，数据库实例是程序，是一种管理软件。应用程序只能通过数据库实例才能和数据库打交道。
+- 存储引擎 ： 数据在磁盘中不同的存储形式
+	- InnoDB存储引擎
+		- 支持事务。（对指令进行批量操作）
+	- MyISAM存储引擎
+		- 不支持事务，支持全文检索
+		- 多一次io操作，因为b+树中叶子节点存的是数据的地址。
+	- Memory存储引擎
+		- 将数据存放在内存中，速度快。
+- InnoDB存储引擎
+	- InnoDB存储引擎是多线程的模型。
+	- 基于磁盘存储，利用缓存池技术来提高性能。
+	- checkpoint技术将脏页刷新至磁盘。
+- 索引
+	- 全文索引
+		- B+树能很好的找出前缀为目标的数据，但很难找出包含目标值的数据。
+		- 使用倒排索引实现
+			- 利用关联数组实现
+	- B+树索引
+		- 不能找到具体的行，只能找到行所在的页，然后在页中寻找。
+		- 高度2-4层
+		- 聚集索引 ：数据和索引是否放在一起，是，则是聚簇索引，否，则不是。
+			- 一个表只有一个聚集索引，一般为主键
+			- 用b+树存放数据，叶子节点为数据页。
+		- 主键索引
+		- 唯一索引
+		- 辅助索引，普通索引， 二级索引
+			- 一个表有多个辅	助索引，不存放数据，而是存放主键索引的位置，再通过聚集索引找到相应的数据页。
+		- 回表： 当使用其他索引，叶子结点不包含数据，需要到主键索引中查找，这个过程就叫回表。
+		- 覆盖索引
+			- 避免回表
+			- 从辅助索引中就可以得到信息，不用再用聚集索引
+		- 组合索引 ：一个索引包含多个列
+			- 最左匹配原则 ：适合于组合索引，必须先匹配第一个列，然后再匹配第二个列。
+			- 索引下推 ：原来在server中做的过滤操作，换到存储引擎中做数据过滤。
+		- 全文索引
+		- 为啥主键一般选择自动递增？
+			- 元素值的添加和删除都会影响，b+树的结构和层数。影响索引的结构。
+	- 哈希索引
+	- 创建索引的时候都有一个key，这个key是什么？
+		： 默认情况下是主键，如果没有主键，那么是唯一键，如果没有唯一键，那么是一个6字节的rowid。
+	- 索引设计原则 ： 查询更快、占用空间更小。
+- 锁
+	- 基于锁的属性：共享锁、排它锁
+		- 共享锁又称读锁
+		- 排他锁又称写锁
+	- 基于锁的粒度：行级锁（innodb）、表级锁（innodb、myisam）、页级锁（bdb）、记录锁、间隙锁、临键锁
+	- 基于锁的状态： 意向共享锁、意向排它锁
+	- 
+- MySQL数据结构的选择
+	- hash表
+		- memory内存引擎使用hash表，innodb使用自适应hash
+		- hash引擎，必须设计hash算法，减少碰撞
+		- 无法进行范围选择。
+		- 占内存
+	- 二叉搜索树 ：极端情况下，不平衡，查询效率低
+	- avl树：高度平衡，查找块，但是增删改，代价太大
+	- 红黑树：不是绝对平衡，增加增删改的效率
+		- 数据越来越多，树深度会增加，io次数多，降低效率
+	- B树 ：多叉树
+		- 每个结点都存数据。
+	- B+树 ：
+		- 只有叶子节点存放数据。
+		- 非叶子节点只存储key值
+		- 存3阶树比B树数据多
+- 创建索引，用int还是varchar？ 谁占用内存小，用谁。
+- 优化
+	- 性能监控	
+		- explain 
+			- type (优化重要字段) ： 
+				- const ：一次命中
+				- system ： 同上
+				- eq_ref ：唯一性索引，可能需要回表
+				- ref ： 非唯一性索引，可能需要回表
+				- range ： 
+				- index ：只遍历索引树
+				- all ：全表扫描
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+------ 正则表达式 描述了一种字符串匹配的模式
+- 普通字符
+	- [ABC] : 匹配[...]中的所有字符
+	- [^ABC] : 匹配除了[...]中字符的所有字符。
+	- [A-Z] : 表示一个区间，匹配所有大写字母
+	- \w : 匹配字母、数字、下划线。等价于[A-Za-z0-9_]
+	- [\s\S] : 匹配所有。\s 是匹配所有空白符，包括换行，\S 非空白符，不包括换行。
+- 特殊字符
+	- * ： 匹配前面的子表达式零次或多次。
+	- + ： 匹配前面的子表达式一次或多次。
+	- [.] : 匹配除换行符之外的任何单个字符。
+	- ? ： 匹配前面的子表达式零次或一次。例如，"do(es)?" 可以匹配 "do" 、 "does" 中的 "does" 、 "doxy" 中的 "do" 。
+	- {n,m} : m 和 n 均为非负整数，其中n <= m。最少匹配 n 次且最多匹配 m 次。例如，"o{1,3}" 将匹配 "fooooood" 中的前三个 o。
+	- | 等于or
+	- 定位符^文本的开始
+	- 定位符$文本的结束
+	

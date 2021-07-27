@@ -1,0 +1,504 @@
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stack>
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <array>
+#include <unordered_map>
+#include <map>
+#include <queue>
+#include <set>
+#include <unordered_set>
+#include<bits/stdc++.h>
+
+acii码 : A- 0X41(65) a-0x61(97)
+求次方 pow(a,b) ; a^b;
+求最大公约数 gcd(a,b); 例： a == 2; b == 4; 输出：2
+
+判断两个字符数组是否相等 strcmp（a,b） == 0; 相等
+string: 所有取子字符的方法都是，一个起始位置加上一个取字符的个数。<string>
+构造：string s(10,'a');10个'a'; 比较：a.compare(b); 相等：0，a>b:1 a<b:-1
+查找：s.find("abc", int begin, int cnt); 后两个参数都是修饰"abc"的,返回索引。
+子串：sb = s.substr(begin, cnt);  sb = s.substr(0,s.find("a"))
+	sb = s.substr(s.find("a")+1); 用a来切割字符串。
+
+s.size();s.empty();
+整型to字符串：int i = stoi(s); string s = to_string(i);
+s.erase(iter); s.erase(int pos);从pos开始删除到末尾。
+s.insert(int p, string s1); s.insert(iter it, int n, char c);插入n个c
+反转字符串或vector： reverse(a.begin(), a.end());
+
+
+vector：<vector>
+构造：vector<int> v(5);大小为5；vector<int> v(5,1); 5个1；
+vector<int> v = {1,2,3,4,5};
+v.size();v.empty();v.push_back();v.pop_back();v.clear();
+v.emplace_back(); 尽量代替push_back();
+比较：两个vector是否相等 v1 == v2;
+v.insert(iter, n, elem);v.erase(iter);
+v.emplace(iter,elem);//只能插入一个，用了
+v.resize(n); 可以初始化vector的大小；
+排序：bool Comp(const int& a, const int& b) {
+			return a > b;
+		}
+sort(vec.begin(), vec.end(), Comp);//从大到小,默认从小到大
+nth_element(ar, ar + m * n - K, ar + m * n); //排序，第ar + m * n - K位置上输出第m * n - K小的数。
+stable_sort(vec.begin(), vec.end(), Comp);//从大到小
+
+<map><unordered_map>
+map: 键值不能重复,按照键值升序排序，底层红黑树。
+构造：map<int,string> m;
+m.insert(pair<int,string>(1,"name1"));//insert插入
+m[2] = "name1";//数组方式插入
+m.insert({{3,"name3"},{4,"name4"},{5,"name5"}});
+查找： iter = m.find(1);//查找键值，返回迭代器。
+		int i=m.count(1); 返回0 或1，因为键值不重复
+删除： m.erase(key);
+
+unordered_map：底层哈希表，键值不能重复，操作与map一样，
+
+mutimap:键值可以重复
+查找：auto pr = people.equal_range("Ann");
+		if(pr.first != std::end(people))
+		{
+			for (auto iter = pr.first ; iter != pr.second; ++iter)
+				std:cout << iter->first << " is " << iter->second << std::endl;
+		}
+	auto n = people.count("Jack"); // Returns 2	
+
+	
+mutiset，unordered_set,set:不能修改，只能删除在增加
+set<int> s; s.insert(1); s.erase(1);iter = s.find(2);int i = s.count();
+	
+stack:
+stack<int> s; s.push(); int i = s.top(); s.pop();
+queue:
+queue<int> q; inti = q.front();int i = q.back();
+q.push(int i); q.pop();
+priority_queue：操作和queue一样。
+priority_queue<int> q; inti = q.top();int i = q.back();
+q.push(int i); // 插入并排序 q.pop();
+ //升序队列，小顶堆
+ priority_queue <int,vector<int>,greater<int> > q;
+ //降序队列，大顶堆
+ priority_queue <int,vector<int>,less<int> >q;
+ priority_queue<int> q; 默认是大顶堆。
+
+// 算法：
+链表结构：
+ struct TreeNode {
+     int val;
+     TreeNode *left;
+     TreeNode *right;
+     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ };
+ 二叉树遍历：
+ - 先序遍历：
+	    void preorder(TreeNode *root, vector<int> &res) {
+        if (root == nullptr) {
+            return;
+        }
+        res.push_back(root->val);
+        preorder(root->left, res);
+        preorder(root->right, res);
+    }
+
+    vector<int> preorderTraversal(TreeNode *root) {
+        vector<int> res;
+        preorder(root, res);
+        return res;
+    }
+ - 中序遍历
+     void inorder(TreeNode* root, vector<int>& res) {
+        if (!root) {
+            return;
+        }
+        inorder(root->left, res);
+        res.push_back(root->val);
+        inorder(root->right, res);
+    }
+    vector<int> inorderTraversal(TreeNode* root) {
+        vector<int> res;
+        inorder(root, res);
+        return res;
+    }
+ - 后序遍历
+     void postorder(TreeNode *root, vector<int> &res) {
+        if (root == nullptr) {
+            return;
+        }
+        postorder(root->left, res);
+        postorder(root->right, res);
+        res.push_back(root->val);
+    }
+
+    vector<int> postorderTraversal(TreeNode *root) {
+        vector<int> res;
+        postorder(root, res);
+        return res;
+    }
+ - 层序遍历 BFS
+	vector<vector<int>> levelOrder(TreeNode* root) {
+        vector <vector <int>> ret;
+        if (!root) {
+            return ret;
+        }
+
+        queue <TreeNode*> q;
+        q.push(root);
+        while (!q.empty()) {
+            int currentLevelSize = q.size();
+            ret.push_back(vector <int> ());
+            for (int i = 1; i <= currentLevelSize; ++i) {
+                auto node = q.front(); q.pop();
+                ret.back().push_back(node->val);
+                if (node->left) q.push(node->left);
+                if (node->right) q.push(node->right);
+            }
+        }       
+        return ret;
+    }
+- 二叉树深度 DFS ，和遍历一样。
+    int max_deep = 0, deep = 0;
+    void DFS(TreeNode *node, int deep) {
+        if (node == NULL) {
+            return;
+        }
+        deep += 1;
+        max_deep = max(deep, max_deep);
+        DFS(node->left, deep);
+        DFS(node->right, deep);
+
+    }
+    int maxDepth(TreeNode* root) {
+        DFS(root, deep);
+        return max_deep;
+    }
+	
+- 排列组合Cn-m: n!/(m! * (n-m)!) // 不按照顺序排列
+	       for (int x = n, y = 1; y <= m; ++x, ++y) {
+				ans = ans * x / y;
+			}
+	An-m : n!/(n-m)! //按照顺序排列
+		for(int x= n; x > n-m; x--)
+		{
+			ans = ans*x;
+		}
+
+- 路径搜索，dfs主要用来计算有多少条路可行路径的。
+		dfs + 回溯 核心
+	    grid[r][c] = -1; 可以在原数组上修改，也可以用isV辅助数组来修改。
+        for (auto [nr, nc] : vector<tuple<int, int>>{ {r - 1,c}, {r + 1, c}, {r,c - 1}, {r,c + 1} })
+        {
+            if (0 <= nr && nr < R && 0 <= nc && nc < C && grid[nr][nc] != -1)
+                //
+				//dfs()
+				//
+        }
+        grid[r][c] = 0;                 //回溯
+- 路径搜索，bfs主要用来计算最短路径的。
+
+- 两种归并排序
+  - 自顶而下的归并排序，利用递归实现
+		step1：首先找到区间的中心点，中心点可将区间分为两个子区间；
+		step2：分别对左区间和右区间递归调用step1；
+		step3：merge左区间和右区间，这步就是排序。
+  - 自低而上的归并排序， 利用迭代实现
+		step1：将区间分为len = 1 的若干个子区间。
+		step2：两两合并。
+		step3：重复step1~step2,每重复一次len <<= 1;直到len 大于区间元素位置。
+		
+- 图的遍历，即拓扑排序，判断一个有向图是否有环
+	- 首先建立邻接表，表示走向，一般用 vector<vector<int> >表示
+	- 遍历方式有两种 dfs和bfs。
+		
+		- dfs，设置一个visitd数组，表示当前结点是否访问，0：未访问；1：正在访问；2：访问完成
+		  遍历每个节点，从未访问过的结点开始进行dfs，若访问当visited为1 的结点，则表示有环
+		         for(int i = 0; i < numCourses; i++)
+				{
+					if(visited[i] == 0 && res == true)
+					{
+						dfs(i);
+					}
+				}
+				
+				void dfs(int n)
+				{
+					visited[n] = 1;
+					if(res == false ) return;
+					for(int i = 0 ; i < edges[n].size(); i++)
+					{
+						if(visited[edges[n][i]] == 1){
+							res = false;
+							return;
+						}
+						else if(visited[edges[n][i]] == 0)
+						{
+							dfs(edges[n][i]);
+						}
+					}
+					visited[n] = 2;
+				}
+		- bfs，设置一个入度表，不是每个节点有多少个入口，从入度为0的结点开始进行bfs，压入队列，
+			然后一次弹出，没弹出一个结点，修改剩余结点的入度，然后压入入度为0的结点，若最后压入队列
+			的结点数不等于总结点数，说明有环。
+			//建立入度和领接表
+			    for(int i = 0; i < prerequisites.size(); i++)
+				{
+					for(int j = 0 ; j < prerequisites[i].size(); j++)
+					{
+						edges[prerequisites[i][1]].emplace_back(prerequisites[i][0]);
+						rudu[prerequisites[i][0]]++;
+					}
+				}
+			//然后压入入度为0的元素
+			    for(int i = 0 ; i < rudu.size(); i++)
+				{
+					if(rudu[i] == 0){
+						q.push(i);
+					}
+				}
+
+				while(!q.empty())
+				{
+					int size = q.size();
+					for(int i = 0 ; i < size; i++)
+					{
+						int tmp = q.front();
+						q.pop();
+						res++;
+						for(auto & v : edges[tmp])
+						{
+							//修改入度表
+							rudu[v]--;
+							if(rudu[v] == 0)
+							{
+								q.push(v);
+							}
+						}
+					}         
+				}
+				return res == numCourses;
+- 并查集，将相同类型的元素放在一个集合里面，这是一种数据结构，一般用树或者数组实现，能够很快的查找，两个点是否在
+	同一集合里，和计算集合的数量。
+	//初始化 ，把所有的元素都分为单独的集合。
+	parent[i] == i；
+	//查找一个元素处于哪一个集合，即它的根节点是谁
+	-     int Find(vector<int>& parent, int index) {
+				if (parent[index] != index) {
+					parent[index] = Find(parent, parent[index]); //路径压缩。改变数据的实际结构，让所有元素都指向根节点。
+				}
+				return parent[index];
+			}
+	//将两个元素所在的集合进行合并，即index1所在集合的根节点的父节点变为index2所在集合的根节点。
+    void Union(vector<int>& parent, int index1, int index2) {
+        parent[Find(parent, index1)] = Find(parent, index2);
+    }
+	//最后计算parent[i] == i 的个数就是集合的个数。
+	
+- 旋转类型，都可以转变成翻转
+	例： int a[] = {1,2,3,4,5,6}; 求向左循环n次的结果。
+	：方法一： 可以用辅助数组去做， 但是需要考虑空间复杂度较高。
+	：方法二：原地修改用tmp变量.
+	
+- 背包问题
+	给定一个target，一个arrs，问：能否使用arrs中的元素做各种排列组合得到target
+  - 0-1背包
+	外循环遍历arrs，内循环遍历target，且内循环倒序（不可重复选择都是倒序）
+  - 完全背包
+	若元素可重复且不考虑元素之间顺序， arrs放在外循环，target在内循环。且内循环正序。（可重复选择都是正序）
+	若组合问题考虑元素之间的顺序，需将target放在外循环，将arrs放在内循环，且内循环正序。
+
+- lower_bound(begin,end,num); 从数组的begin位置到end-1位置二分查找第一个小于或等于num的数字不存在则返回end。
+							通过返回的地址减去起始地址begin,得到找到数字在数组中的下标。
+- upper_bound( begin,end,num)：从数组的begin位置到end-1位置二分查找第一个大于num的数字，找到返回该数字的地址，不存在则返回end。
+								通过返回的地址减去起始地址begin,得到找到数字在数组中的下标。
+-lower_bound( begin,end,num,greater<type>() ):从数组的begin位置到end-1位置二分查找第一个小于或等于num的数字，找到返回该数字的地址，
+							不存在则返回end。通过返回的地址减去起始地址begin,得到找到数字在数组中的下标。
+-upper_bound( begin,end,num,greater<type>() ):从数组的begin位置到end-1位置二分查找第一个小于num的数字，找到返回该数字的地址，
+							不存在则返回end。通过返回的地址减去起始地址begin,得到找到数字在数组中的下标。
+	* 这里的begin是地址，比如数组a[1000],	upper_bound( a,a+10,4);
+							
+- https://leetcode-cn.com/problems/sliding-window-median/solution/feng-xian-dui-chong-shuang-dui-dui-ding-hq1dt/
+	滑动窗口中位数：双顶堆+延迟删除（哈希表实现）
+							
+							
+void merge(vector<int>& arg, int lstart, int lend, int rstart, int rend)
+{
+	vector<int> tmp(arg);
+	int i = lstart;
+	int j = rstart;
+	int index = lstart;
+	while (i <= lend && j <= rend)
+	{
+		if (tmp[i] <= tmp[j]) {
+			arg[index++] = tmp[i++];
+		}
+		else {
+			arg[index++] = tmp[j++];
+		}
+	}
+	while (i <= lend)
+	{
+		arg[index++] = tmp[i++];
+	}
+	while (j <= rend)
+	{
+		arg[index++] = tmp[j++];
+	}
+}
+void mergeCore(vector<int>& arg, int left, int right)
+{
+	if (left < right)
+	{
+		int mid = (left + right) / 2;
+		mergeCore(arg, left, mid);
+		mergeCore(arg, mid + 1, right);
+		merge(arg, left, mid, mid+1, right);
+	}
+}
+void mergeSort(vector<int>& arg)
+{
+	mergeCore(arg, 0, arg.size() - 1);
+}
+
+int partition(vector<int>& arg, int start, int end)
+{
+	int pivot = start + rand() % (end - start + 1);
+	int smallindex = start - 1;    //
+	swap(arg[end], arg[pivot]); //将标杆放置arg的末尾
+	for (int i = start; i <= end; i++)
+	{
+		if (arg[i] <= arg[end]) {
+			smallindex++;
+			if (i > smallindex) {
+				swap(arg[smallindex], arg[i]);
+			}
+		}
+	}
+	return smallindex;
+}
+void QuickSortCore(vector<int>& arg, int start, int end)
+{
+	//递归中止条件
+	if (start > end || start < 0 || end >= arg.size()) return;
+	//随机选择一个数，放置数组末尾
+	//根据所选的数将数组分成两部分
+	int smallindex = partition(arg, start, end);
+	//递归左边部分，递归右边部分
+	if (smallindex > start) {
+		QuickSortCore(arg, start, smallindex-1);
+	}
+	if (smallindex < end) {
+		QuickSortCore(arg, smallindex+1, end);
+	}
+}
+void QuickSort(vector<int>& arg)
+{
+	int len = arg.size();
+	QuickSortCore(arg, 0, len - 1);
+}
+
+//找到中间值
+int binarySearch(vector<int>& arg, int target) {
+	int left = 0, right = arg.size() - 1;
+	while (left <= right) {
+		int mid = (left + right) / 2;
+		if (arg[mid] == target) {
+			return mid;
+		}
+		else if (arg[mid] < target)
+		{
+			left = mid+1;
+		}
+		else if (arg[mid] > target)
+		{
+			right = mid-1;
+		}
+	}
+	return -1;
+}
+//若有重复，找到target的左边界
+int binarySearch(vector<int>& arg, int target) {
+	int left = 0, right = arg.size();        //tips1
+	while (left < right) {						//tips2
+		int mid = (left + right) / 2;
+		if (arg[mid] == target) {
+			right = mid;                         //tips3
+		}
+		else if (arg[mid] < target)
+		{
+			left = mid + 1;
+		}
+		else if (arg[mid] > target)
+		{
+			right = mid;                        //tips4
+		}
+	}
+	return left;                                //tips5
+}
+
+//若有重复，找到target的右边界
+int binarySearch(vector<int>& arg, int target) {
+	int left = 0, right = arg.size();        //tips1
+	while (left < right) {						//tips2
+		int mid = (left + right) / 2;
+		if (arg[mid] == target) {
+			left = mid + 1;                        //tips3
+		}
+		else if (arg[mid] < target)
+		{
+			left = mid + 1;
+		}
+		else if (arg[mid] > target)
+		{
+			right = mid;                        //tips4
+		}
+	}
+	return left-1;                           //tips5
+}
+
+//找到第一个比target大的位置
+	//直接找到右边界加1
+	
+	
+class A
+{
+public:
+	A() {};
+	A(int d) : data(d) {};
+	A(const A& other) : data(other.data) {};
+	A& operator=(const A& other) {
+		if (&other != this) {
+			//如果是深拷贝，需要释放当前对象中的内存
+			//然后动态分配一块新的内存，并用other中的数据进行初始化
+			//最后把数据赋值给当前对象。
+			//需要考虑异常安全性，因为new新内存的时候可能出错。
+			/*
+			    char *tmp = new(nothrow) char[strlen(str.pData) + 1];
+				if (tmp == nullptr)
+					return *this;
+
+				strcpy(tmp, str.pData);
+
+				delete []pData;
+				pData = tmp;
+				tmp = nullptr;
+			*/
+			data = other.data;
+		}
+		return *this;
+	}
+private:
+	int data;
+};
+
+
+
+
+

@@ -1,0 +1,316 @@
+C++
+1、在类的内部定义成员函数的函数体，这种函数会自动为内联函数，
+   这种函数在函数调用的地方在编译阶段都会进行代码替换。
+2、C++编译器自动为类产生四个缺省函数：默认构造函数、默认析构函数、默认赋值函数
+										默认拷贝构造函数。
+3、拷贝构造函数
+	A a； A b(a); A b = a; 
+	用已有的类的对象构造一个新的对象，这里的a是存在的，b是不存在的。
+	定义： A(const A& other): mem_data(other.mem_data){}
+	什么时候被调用：
+		1）当用一个对象去初始化一个新的对象时
+		2）如果函数的形参是类的对象，调用函数进行形参和实参结合时
+		3）如果函数的返回值是类的对象，函数调用完成返回时
+	浅拷贝：如果复制对象中引用了一个外部内容（例如分配在堆上的数据），那么在复制这个对象的时
+		    候，新旧两个对象指向同一块内容。
+	深拷贝：拷贝的时候为新对象制作了外部对象的独立复制。默认的拷贝构造函数是浅拷贝。
+4、赋值函数
+	A a; A b; b = a; 
+	这里a b 对象已经存在，用a对象来赋值给b。
+	定义： string& operator=(const string& other){}
+	如果类对象里有内存分配，需要先释放掉原来的内存，再进行内存内容的复制。
+5、必须要使用列表初始化的几种情况
+	1）类成员为const
+		A() member_a(aaa),member_b(bbb){};  //这里的成员变量为const，不能用 = 进行初始化
+	2）类成员为引用类型
+		同理，成员变量为引用&时，也只能在列表进行初始化。引用在功能上和常量指针是一样的。
+	3）类成员，没有默认构造参数类型
+	class B{}; //该类没有默认构造参数
+	class A{
+		A(v): b(v){};
+		B b;
+	};
+	4）如果类存在继承关系，派生类必须在其初始化列表中调用基类的构造函数。
+6、静态成员函数在任何类的实例别创建之前调用它们，这使得它们可以用来执行复杂的初始化任务。
+	静态成员函数中不能直接用非静态成员变量，因为它没有隐式的this指针。
+7、可以通过友元，继承，和公有成员函数访问类的非公有成员。
+	友元提供了不同类之间进行数据共享的机制。friend
+	1）因为友元函数没有this指针，所以访问非静态成员时，需要对象做参数。
+	2）友元关系不能被继承。
+8、流运算符不能通过类的成员函数重载，因为通过类的成员函数重载的运算符第一个参数必须是自己，
+	而流运算符的重载要求第一个参数是流对象。所以一般用友元来解决。
+9、 ======== 公有继承 ============
+	基类  |  public	| protected | private
+	派生类|	 public | protected | 不可访问
+	========protected==============
+	基类  |  public	   | protected | private
+	派生类|	 protected | protected | 不可访问	
+	========private ==============
+	基类  |  public	   | protected | private
+	派生类|	 private   | private   | 不可访问	
+10、 重载：编译阶段就找到具体调用的方法，静态绑定，参数列表不同。
+	 多态，只有等到调用方法的那一刻，编译器才能确定所要调用的具体方法，动态绑定。用虚函数表实现虚函数。
+11、构造函数可以被重载，但析构函数不行！！！
+12、delete与 delete []区别：
+	1)用new申请的对象，用delete；用new[]申请的对象用delete[]。
+	2) 因为需要对对象数组中的每一个对象调用析构函数。
+13、基类的析构函数应该被定义为虚函数，这样当基类指针操作派生类时，内存才会被释放完全。
+14、当虚函数表现多态性时不能内联，因为多态性是在运行期间确定，而内联是在编译期间确定。
+15、extern "C" 用于告诉C++这段代码是C函数。这是因为C++编译后库中函数名会变得很长，与C生成的不一致，造成C++
+	不能直接调用C函数，加上extern “C”后，C++就能直接调用C函数了。
+16、为了阻止编译器自动产生默认函数，如：默认复制构造函数和赋值操作符。
+	1）可将对应的成员函数声明为private并且不予实现。
+	2）使用base class
+		class uncopyable{
+			protected:                  //允许派生类构造和析构
+				uncopyable(){};
+				~uncopyable(){};
+			private：
+				uncopyable(const uncopyable);               //阻止copy
+				uncopyable& opertor=(const uncoptable&);
+		};
+		class H : private uncopyable{
+			...
+		};
+		当调用H 的复制操作时，就会尝试调用base class 的对应兄弟，那些调用会被编译器拒绝，因为其为base class的private。
+17、必须为纯虚函数提供一份定义。
+18、析构函数决不能突出异常。如果被析构函数调用的函数可能突出异常，析构函数应该捕捉任何异常，然后吞下它们或结束程序。
+	如果客户需要对一个操作函数运行期间抛出的异常做出反应，那么class应该提供一个普通函数（而不是析构函数）执行该操作。
+19、在构造和析构期间不要调用virtual函数，因为这类调用从不下降至derived class.
+20、另赋值操作符返回一个reference to *this。
+21、1）auto_ptr智能指针是一个类指针对象，其析构函数自动对其所指向对象调用delete。
+	若通过拷贝构造或赋值运算符复制他们，他们会变成null，而复制所得的指针将取得资源的唯一拥有权。
+    2）shared_ptr指针就是引用计数型智慧指针，持续追踪共有多少对象指向某笔资源，并在无人指向它时自动删除该资源。
+	3）以独立语句将new对象存储于智能指针内。如果不这样做，一旦异常被抛出，有可能导致难以察觉的资源泄漏。
+	4）unique_ptr 独占所指向的对象
+22、lambda表达式，匿名函数对象，c++11新特性。
+	[函数对象参数] (操作符重载函数参数) mutable 或 exception 声明 -> 返回值类型 {函数体}
+	1）[函数对象参数]
+		空: 没有任何参数
+		= ：可使用所有局部变量，并以值的方式传递。
+		& ：可使用所有局部变量，并以引用的方式传递。
+		this : 可使用lambda所在类中的成员变量。
+		a ：将a按值进行传递。但是不能修改a的值，要想修改必须加上mutable。
+		&a：将a按引用传递
+	2）	mutable 可以修改传递进来的拷贝。
+23、考虑写给个swap函数，首先在class里写一个member 函数，然后再在class所属的命名空间写一个non-member函数调用member函数，
+	最后在non-member函数里加上，using std::函数名。
+24、decltype关键字：我们希望从表达式的类型推断出要定义的变量类型，但是不想用该表达式的值定义变量。
+	decltype与auto的区别：
+		1）auto忽略顶层const，decltype保留顶层const；
+		2）对引用和解引用操作，auto推断出原有类型，decltype推断出引用。
+		3）auto推断时会实际执行，decltype不会执行，只做分析。
+25、删除string中左边和右边的空格：
+	inline std::string ltrim(const std::string &str) 
+    {
+        std::string s(str);
+        s.erase(s.begin(), std::find_if_not<decltype(s.begin()), int(int)>(s.begin(), s.end(),
+                std::isspace));
+        return s;
+    }
+    // trim from end (construct new string) 删除字符串末尾的空格。
+    inline std::string rtrim(const std::string &str)
+    {
+        std::string s(str);
+		//必须需要加上<>的原因是 std::isspace有多个重载函数，如果不加<>，编译器无法知道std::isspace调用的是哪一个函数
+        s.erase(std::find_if_not<decltype(s.rbegin()), int(int)>(s.rbegin(), s.rend(),
+                std::isspace).base(), s.end());
+        return s;
+    }
+	string a;
+	a = rtrim(ltrim(a));
+	
+	//reverse_iterator:: https://en.cppreference.com/w/cpp/iterator/reverse_iterator/base
+	
+
+	
+26、static_cast 强制类型转换：
+	1）static_cast可以用来消除重载函数的二义性：
+	例：        
+	s.erase(std::find_if_not<decltype(s.rbegin()), int(int)>(s.rbegin(), s.rend(),
+                std::isspace).base(), s.end());
+	--由于std::isspace有多个函数重载。所以find_if_not必须要用<>来说明调用的是哪一个函数。
+	s.erase(std::find_if_not(s.rbegin(), s.rend(),
+                static_cast<int(*)(int)>(std::isspace)).base(), s.end());
+	-- 可以通过static_cast<int(*)(int)>说明调用的是哪一个重载函数，消除函数的二义性。
+	2）用来初始化
+	std::vector<int> v = static_cast<std::vector<int>>(10);
+    std::cout << "v.size() = " << v.size() << '\n'; // output 10
+	3)static downcast
+		D d;
+		B& br = d; // upcast via implicit conversion
+		br.hello();  // this is a B
+		D& another_d = static_cast<D&>(br); // downcast
+		another_d.hello(); //this is a D;
+	4) 可以将lvalue to xvalue
+		std::vector<int> v2 = static_cast<std::vector<int>&&>(v);
+		std::cout << "after move, v.size() = " << v.size() << '\n';	// 0
+	5) discarded-value expression
+       static_cast<void>(v2.size());
+	   
+************************************
+	dynamic_cast RTTI（运行时类型检测），安全
+	reinterpret_cast 顾名思义 重新解释 强行转换指针，非常强大
+26.1 
+	1） 右值引用可以增加临时变量的生命周期（左值引用也可以）
+		std::string&& r3 = s1 + s1;      // okay: rvalue reference extends lifetime
+		r3 += "Test";                    // okay: can modify through reference to non-const
+	2） 右值引用，可以去除不必要的copy，move后之前的变量就不能再使用了
+		A a2 = std::move(a1); // move-constructs from xvalue ，a1 is not used.
+
+27、typename的意义：
+	1）在template声明式中，typename和class的意义相同。
+	2）为了知道class::iterator是一个类型而不是一个变量，需要加上typename。
+		typename class::iterator x;
+28、C++对象模式：
+	1）简单对象模型：每一个solt指向一个member。降低了C++编译器的设计复杂度，而损失了空间和执行
+		期的效率。
+	2）表格驱动模型：一个object内有两个solt，一个指向member date table,一个指向member function table。
+		虽然编译器内没有用到这种模型，但却给了virtual function提供了一个有效地方案。
+	3）C++对象模型：在简单对象模型技术上派生而来，并对空间和存取时间做了优化。
+		nostatic data置于class object内, static data和function members(static and nostatic)分别置于
+		不同的class object中，每个class object中有一个vtr_point指向vtr table。
+29、如果class没有定义default constructor，编译器不一定会合成出一个：
+	1）当class内“调用member object或base class 的default constructor或为一个object初始化其virtual function
+		机制或virtual base class机制”，编译器会合成一个implicit nontrivial default constructors。
+		编译器不会合成implicit trivial default constructors
+30、istringstream、ostringstream、stringstream;用于执行C风格的串流输入操作
+	例： #include<iostream>  
+		#include<sstream>        //istringstream 必须包含这个头文件
+		#include<string>  
+		using namespace std;  
+		int main()  
+		{                                                                                                                                                                                                                           
+			string str="i am a boy";  
+			istringstream is(str);  
+			string s;  
+			while(is>>s)  
+			{  
+				cout<<s<<endl;  
+			}  
+		}
+	输出是：	i
+				am
+				a
+				boy
+31、c++11新特性
+	1）头文件不带.h : 例：#include <vector>
+	2)variadic Templates:(接受任意参数，且类型可以不一样)
+		- 例1：
+			void print(){}  //需要一个作为终止条件。
+			template<typename T,typename... Types>
+			void print(const T& firstArg, const Type&... args)
+			{
+				cout<<firstArg<<endl;
+				print(arg...);          //call print() for remaining argments, 递归(recursive)
+			}
+			注：sizeof...(arg)结果是arg的个数。
+		- 例2：maximum(54,16,48,5);//不用initializer_list<>实现。
+			int maximum(int n){return n;}//递归终止条件
+			//在编译时就可计算出max的大小
+			template<typename...Args>
+			int maximum(int n, Args...args)
+			{
+				return std::max(n,maximum(args...));  
+			}
+		- 例3：递归的继承 tuple的实现
+			template<tupename... Vaules> class tuple;
+			template<> class tuple<>{};    //递归终止条件
+			template<typename Head, typename... Tail>
+			class tuple<Head,Tail...>:private tuple<Tail...>
+			{
+				typedef tuple<Tail...> inherited;
+				protected:
+					Head m_head;			
+				public:
+					tuple(){}
+					tuple(Head v, Tail...vtail): m_head(v),inherited(vtail...){} //调用父类构造函数，而不是创建临时对象
+					//error: typename Head::type head(){return m_head;} 编译不通过，因为原始类型不是类能不能用::type
+					//通过，但复杂：auto head()->decltype(m_head) {return m_head;}
+					Head head(){return m_head;}
+					inherited& tail(){return *this;}
+			}
+	3)auto 自动推断类型,主要用到迭代器类型推断。
+	4) initializer_list<>：调用时用参数用{}括起来。例：max({54,16,48,5}); //54
+	5) for(decl : coll){statement}
+	6) = default, =delete（主要作用到构造函数和赋值函数）
+	7) alias Template(化名 模板) 
+		例：
+			template<typename T> using Vec = std::vector<T,MyAlloc<T>>;
+			Vec<int> coll; //is equivalent to std::vector<int,MyAlloc<int>> coll;
+			//不能对Vec进行特化或偏特化。
+			若用define or typedef
+			#define Vec<T> template <typename T> std::vector<T,MyAlloc<T>>;
+			Vec<int> coll;// is equivalent to template<typename int> std::vector<int,MyAlloc<int>> coll; is wrong
+			typedef std::vector<int,MyAlloc<int>> Vec; //is wrong
+		
+		设计一个测试函数，test(containter, elem);第一个参数传入一个容器类型，第二个参数是容器内元素的类型
+		planA： tamplate<typename containter> test(containter c){
+					typedef typename iterator_trait<typename containter::iterator>::value_type Valtype;
+					//这样就可以及获取到容器的类型也可以获取到元素的类型。
+				}
+		planB：
+				tip1: template template parameter
+						template<typename T, template<class> class Container> class TEMP{};//这个类的第二个模板参数是一个类的类型
+						TEMP<MySring,vector> c1;//这将报错，因为标准库中vector类有两个模板参数，第二个是内存分配器，虽然是默认的，
+												//但是TEMP类定义的模板中所接受的类只有一个参数，这将导致定义与声明不一致
+												//若在模板参数类中定义两个参数，但是第二个参数是由第一个参数推导而出的，这将不可实现。
+												//在代码使用的时候没有办法得出第二个模板参数。
+			 so: template<typename T> using Vec = std::vector<T,MyAlloc<T>>;
+				  TEMP<MySring,Vec> c1; //这样的话声明就一致了，因为Vec只有一个模板参数，而第二个是由第一个参数，自动推出。
+	8) type Alias
+		- using func = void(*)(int,int);// is equivation to typedef void(*func)(int,int);
+		- using value_type = T;// is equivations to typedef T value_type;
+		
+	   noexcept	:表示不抛异常
+	   override : 告诉编译器这个函数是重写父类的虚函数 而不是重新定义一个新的函数
+	   final ： 表示该类不能被继承 或 修饰虚函数不能被重写；
+	9)decltype关键字：我们希望从表达式的类型推断出要定义的变量类型，但是不想用该表达式的值定义变量。 (同24)
+		- 用来自动推断返回值类型：template<typename T1, tymplate T2> auto add(T1 x, T2 y) -> decltype(x,y);
+		- 
+	   decltype与auto的区别：
+		1）auto忽略顶层const，decltype保留顶层const；
+		2）对引用和解引用操作，auto推断出原有类型，decltype推断出引用。
+		3）auto推断时会实际执行，decltype不会执行，只做分析。
+	10)lambda表达式，匿名函数对象，c++11新特性。
+		[函数对象参数] (操作符重载函数参数) mutable 或 exception 声明 -> 返回值类型 {函数体}
+		- [函数对象参数]
+			空: 没有任何参数
+			= ：可使用所有局部变量，并以值的方式传递。
+			& ：可使用所有局部变量，并以引用的方式传递。
+			this : 可使用lambda所在类中的成员变量。
+			a ：将a按值进行传递。但是不能修改a的值，要想修改必须加上mutable。
+			&a：将a按引用传递
+		- mutable 可以修改传递进来的拷贝。
+		例：auto l = []{ std::cout<<"hello"<<std::endl;};
+			l(); //prints "hello"
+	11) 右值引用
+		Lvalue：可以出现在 = 左侧
+		Rvalue：只能出现在 = 右侧
+
+	12）可变参数模板
+	
+	
+- constexpr - specifies that the value of a variable or function can appear in constant expressions;
+	- can computed at complie time //和宏类似
+ 34, new
+	- A* a = new A[3]; //这样只能调用默认的构造函数，因为无法对每一个元素进行赋值
+		for()
+			new(a++) A(i); //通过for循环，对已有的地址的调用构造函数进行赋值。这叫做定点new （placement new）
+							
+		delete [] 调用三次析构函数。 而delete则调用一次析构函数，所以对于没有在内部分配过动态内存的类来说，delete不会发生内存泄漏。
+	- new出来的空间必须是16的倍数。
+	- new A() ==> (A*)operater new(sizeof(A)) ==> ::operater new(size_t) ==> malloc(size_t);
+												 //所以可以重载A::operator new 写自己的内存管理函数。
+	- 
+
+
+
+
+
+
+
+
+
+
+
