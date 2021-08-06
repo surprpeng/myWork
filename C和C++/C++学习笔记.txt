@@ -14,7 +14,7 @@ C++
 	浅拷贝：如果复制对象中引用了一个外部内容（例如分配在堆上的数据），那么在复制这个对象的时
 		    候，新旧两个对象指向同一块内容。
 	深拷贝：拷贝的时候为新对象制作了外部对象的独立复制。默认的拷贝构造函数是浅拷贝。
-4、赋值函数
+4、拷贝赋值函数
 	A a; A b; b = a; 
 	这里a b 对象已经存在，用a对象来赋值给b。
 	定义： string& operator=(const string& other){}
@@ -304,13 +304,281 @@ C++
 												 //所以可以重载A::operator new 写自己的内存管理函数。
 	- 
 
+- 单例模式：
+	- 分为懒汉式和饿汉式，区别只在于创建实例的时间不同：
+		- 懒汉式：只有当需要实例的时候才会去创建并使用实例。（非线程安全）
+		- 饿汉式：系统一运行，就会初始化实例，当需要时，直接调用即可（线程安全）
+	- 特点：
+		- 构造函数和析构函数为私有的，目的是禁止外部构造和析构
+		- 拷贝构造和赋值构造也是私有的
+		- 类里有一个获取实例的静态函数，可以全局访问
+	- 懒汉式单例（线程不安全）
+		- class SingleInstance
+		{
+			public:
+				static SingleInstance* GetInstance();
+				static void deleteInstance();
+			private:
+				SingleInstance(){};
+				~SingleInstance(){};
+				
+				//拷贝构造
+				SingleInstance(const SingleInstance & s);
+				//赋值构造
+				const SingleInstance &operator=(const SingleInstance &s);
+				
+				//唯一单例对象指针
+				static SingleInstance *m_SingleInstance;
+		}
 
+		//初始化静态成员变量
+		SingleInstance* SingleInstance::m_SingleInstance = NULL;
+		//线程不安全
+		SingleInstance* SingleInstance::GetInstance()
+		{
+			if(m_SingleInstance == NULL){
+				m_SingleInstance = new (std::nothrow) SingleInstance();//线程不安全
+				//例：当线程1判断此时 m_SingleInstance 为NULL后，还没来得及new，此时去执行线程2，
+				//而此时的线程2 判断 m_SingleInstance也为NULL ,所以就会创建两个实例
+			}
+			return m_SingleInstance;
+		}
+	- 懒汉式单例（线程安全）
+		- class SingleInstance
+		{
+			public:
+				static SingleInstance* GetInstance();
+				static void deleteInstance();
+			private:
+				SingleInstance(){};
+				~SingleInstance(){};
+				
+				//拷贝构造
+				SingleInstance(const SingleInstance & s);
+				//赋值构造
+				const SingleInstance &operator=(const SingleInstance &s);
+				
+				//唯一单例对象指针
+				static SingleInstance *m_SingleInstance;
+				//这里声明一个锁，整个类公用一个锁
+				static std::mutex m_Mutex;
+		}
 
+		//初始化静态成员变量
+		SingleInstance* SingleInstance::m_SingleInstance = NULL;
+		std::mutex SingleInstance::m_Mutex;
+		//线程安全需要+锁
+		SingleInstance* SingleInstance::GetInstance()
+		{
+			//双检锁，只有当指针为空的时候才加锁，不然每次调用GetInstance都会加锁，加锁的开销很大。
+			if(m_SingleInstance == NULL){
+				std::unique_lock<std::mutex> lock(m_Mutex);//加锁
+				if(m_SingleInstance == NULL){
+					m_SingleInstance = new (std::nothrow) SingleInstance();
+				}
+			}
+			return m_SingleInstance;
+		}	
+		//删除操作也需要加锁
+		void SingleInstance::deleteInstance()
+		{
+			std::unique_lock<std::mutex> lock(m_Mutex); // 加锁
+			if (m_SingleInstance)
+			{
+				delete m_SingleInstance;
+				m_SingleInstance = NULL;
+			}
+		}
+	- 使用C++11内部静态变量
+		Single &Single::GetInstance()
+		{
+			// 局部静态特性的方式实现单实例，因为静态变量在类中只会定义一个。
+			static Single signal;
+			return signal;
+		}
 
+	- 饿汉式（本身就线程安全）
+		class Singleton
+		{
+		public:
+			// 获取单实例
+			static Singleton* GetInstance();
 
+			// 释放单实例，进程退出时调用
+			static void deleteInstance();
+			
+			// 打印实例地址
+			void Print();
 
+		private:
+			// 将其构造和析构成为私有的, 禁止外部构造和析构
+			Singleton();
+			~Singleton();
 
+			// 将其拷贝构造和赋值构造成为私有函数, 禁止外部拷贝和赋值
+			Singleton(const Singleton &signal);
+			const Singleton &operator=(const Singleton &signal);
 
+		private:
+			// 唯一单实例对象指针
+			static Singleton *g_pSingleton;
+		};
 
+		// 代码一运行就初始化创建实例 ，本身就线程安全
+		Singleton* Singleton::g_pSingleton = new (std::nothrow) Singleton;
 
+		Singleton* Singleton::GetInstance()
+		{
+			return g_pSingleton;
+		}
 
+		void Singleton::deleteInstance()
+		{
+			if (g_pSingleton)
+			{
+				delete g_pSingleton;
+				g_pSingleton = NULL;
+			}
+		}
+- 手写一个类，包括构造函数，析构函数，复制构造函数，拷贝构造函数，
+	class A
+	{
+		A();
+		~A();
+		//拷贝构造
+		A(const A& other);
+		//赋值构造
+		const A& operator=(const A& other);
+		int a;
+		char *pData;
+	}
+	A::A()
+	{
+		a = 1;
+		pData = new char[5];
+	}
+	A::~A()
+	{
+		delete pData;
+	}
+	A::A(const A& other)
+	{
+		a = other.a;
+		char *tmp = new(nothrow) char[strlen(other.pData) + 1];
+		if (tmp == nullptr)
+			return;		
+		pData = tmp;
+	}	
+	
+	A& operator=(const A& other) {
+		if (&other != this) {
+			//如果是深拷贝，需要释放当前对象中的内存
+			//然后动态分配一块新的内存，并用other中的数据进行初始化
+			//最后把数据赋值给当前对象。
+			//需要考虑异常安全性，因为new新内存的时候可能出错。
+			/*
+			    char *tmp = new(nothrow) char[strlen(other.pData) + 1];
+				if (tmp == nullptr)
+					return *this;
+
+				strcpy(tmp, str.pData);
+
+				delete []pData;
+				pData = tmp;
+				tmp = nullptr;
+			*/
+			a = other.a;
+		}
+		return *this;
+	}
+	
+	
+
+	
+- redies的底层数据结构：
+
+- HTTPS详细过程
+
+- 手写memcpy
+
+- 输入一个URL，会发生什么？
+
+- 进程间的通信方式详解
+	- 管道：只能在有血缘关系的进程间通信
+		- 创建方式： int pipe(int f[2]); //f[0], f[1]两个文件描述符, 成功返回0，失败返回-1
+		- fork后，父进程的f[1]写，子进程的f[0]读，这样就做到了进程间的通信。
+		- 进行4次数据操作，用户到内核，内核到内存，内存到内核，内核到用户
+		- 消息队列也是内核对象，需要进行系统调用，所以也要进行4次数据操作，
+	- 命名管道是一种特殊的文件，用open打开一个fifo，mkfifo()进行创建
+	- 消息队列
+		- 与命名管道不同的是，消息队列可以独立于进程存在，发送消息可以避免命名管道的同步和阻塞问题
+		- 异步的
+	- 信号量，实际是一种互斥的作用
+	- 共享内存
+		- 速度快，直接对内存进行存取
+		- 因为多个进程可以同时操作，所以需要进行同步
+		- 
+- 系统中锁的类型
+	- 悲观锁，只要一访问，就需要加锁
+		- 重量级锁
+			- 获取不到锁，就阻塞
+			- 耗时，因为阻塞到运行状态的切换，开销很大
+		- 自旋锁
+			- 获取不到锁，等一段时间，在进入阻塞状态
+			- 在多处理器中使用，单处理器，自旋锁等待 时间就是空操作
+		- 自适应自旋锁
+			- 等待时间不是固定的，而是很具所得状态来调整
+	- 乐观锁，只有当有冲突了才加锁
+		- 例如两个线程都想修改一个变量，会保存一个旧预期值A,和一个新值B，
+			当线程A提交更新之前，发现旧预期值与内存地址V中的值不一样，提交失败，
+			线程将重新获取旧预期值和新值，这个过程成为自旋。
+		- 上述被称为，CAS机制，比较并替换
+		- 缺点：开销大，只能保证一个变量的原子操作
+		- 轻量级锁
+			- 使用CAS机制保证一个状态变量的原子性，通过状态变量判断是否有线程正在访问
+			- 偏向锁
+				- 适用于始终只有一个线程在执行一个方法的情况
+		
+		- 不可重入锁
+			- 锁不可递归调用，不然就会产生死锁。
+		- 可重入锁
+			- 当判断上锁了之后，需要判断是哪一个线程进行上的锁，如果就是自己上的锁，那么就可以再锁一次
+			- 维护一个加锁次数的变量
+- linux下的ELF格式：
+	- 
+- UDP报文的字段，以及最大可以传输多上个字节
+
+- TCP粘包，什么情况下会发生，小于缓冲区一定会发生粘包吗？怎么避免粘包	
+		
+- vector api
+	- 重新分配大小
+	- 查看还有多少剩余的容量
+- exe执行的第一行代码
+	
+- 日志如何直到当前调用的函数
+	__PRETTY_FUNCTION __ ： 获取完整的函数头信息
+	__FUNCTION__ : 获取函数名
+	__FILE__: 获取源文件的相对路径和名字
+	__LINE__: 获取改行代码在文件中的行号
+- new ，free能配套使用么，在编译阶段会报错么
+	不可以；编译不会报错，只会在运行时报错，因为这个是一个逻辑问题，而不是一个语法问题。
+- 如何调用dll
+	- dll 要和.h .lib配合使用
+	- 在原文件中include .h文件
+	- 将.dll和lib放在相应的目录下面
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
